@@ -38,7 +38,7 @@ class BleService : Service() {
 
     private val mGattCallback: BluetoothGattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
-            var intentAction: String
+            val intentAction: String
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     intentAction = ACTION_GATT_CONNECTED
@@ -93,7 +93,7 @@ class BleService : Service() {
     private fun broadcastUpdate(action: String, characteristic: BluetoothGattCharacteristic?) {
         val intent = Intent(action)
         if (UUID_HEART_RATE_MEASUREMENT == characteristic?.uuid) {
-            var flag = characteristic.properties
+            val flag = characteristic.properties
             var format = -1
             if (flag and 0x01 != 0) {
                 format = BluetoothGattCharacteristic.FORMAT_UINT16
@@ -113,7 +113,7 @@ class BleService : Service() {
                 for (byteChar in data) {
                     stringBuilder.append(String.format("%02X", byteChar))
                 }
-                intent.putExtra(EXTRA_DATA, String(data) + "\n" + stringBuilder.toString())
+                intent.putExtra(EXTRA_DATA, String(data))
             }
         }
         sendBroadcast(intent)
@@ -239,6 +239,17 @@ class BleService : Service() {
             return
         }
         mBluetoothGatt?.readCharacteristic(characteristic)
+    }
+
+    fun writeCharacteristic(characteristic: BluetoothGattCharacteristic?,command:String) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            logErr(TAG, "BluetoothAdapter not initialized")
+            return
+        }
+        val cmdHex = command.toByteArray()
+        characteristic?.value = cmdHex
+
+        mBluetoothGatt?.writeCharacteristic(characteristic)
     }
 
     /**
